@@ -42,7 +42,9 @@ router.post("/",
                 name, email, password
             });
 
+            // ENCRYPT THE PASSWORD BY USING A salt
             let salt = await bcrypt.genSalt(10);
+            user.password = bcrypt.hash(password, salt)
 
         } catch (err) {
 

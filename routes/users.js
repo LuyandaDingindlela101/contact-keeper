@@ -1,7 +1,9 @@
 // GET NEEDED REQUIREMENTS
-const { Router, request } = require("express");
-const User = require("../models/User");
+const config =  require("config");
 const bcrypt =  require("bcryptjs");
+const jwt =  require("jsonwebtoken");
+const User = require("../models/User");
+const { Router, request } = require("express");
 const { check, validationResult } = require('express-validator');
 
 
@@ -44,14 +46,41 @@ router.post("/",
 
             // ENCRYPT THE PASSWORD BY USING A salt
             let salt = await bcrypt.genSalt(10);
-            user.password = bcrypt.hash(password, salt)
+            user.password = await bcrypt.hash(password, salt)
 
-        } catch (err) {
+            // SAVE THE USER TO THE DATABASE
+            await user.save();
 
+            // CREATE A PAYLOAD TO SEND IN THE JWT TOKEN
+            let payload = {
+                user: {
+                    id: user.id
+                }
+            }
+
+            // SIGN THE PAYLOAD TO CREATE A TOKEN
+            jwt.sign(
+                // PASS IN THE PAYLOAD
+                payload, 
+                // GET THE jwt_secret FROM THE CONFIG FILE
+                config.get("jwt_secret"), 
+                // SET THE EXPIRY TIME FOR THE TOKEN
+                { expiresIn: 360000 }, 
+                // CALLBACK FUNCTION WILL RUN WHEN WE GET AN ERROR OR THE TOKEN
+                (error, token) => {
+                    // IF THERE IS AN ERROR, THROW THE ERROR 
+                    if (error) throw error;
+                    // IF THERE IS NO ERROR, SSEND THE TOKEN 
+                    response.json({ token });
+                }
+            )
+        } catch (error) {
+            console.error(error.message);
+
+            response.status(500).send("Server error")
         }
-
-        response.send(request.body);
-})
+    }
+);
 
 
 // EXPORT THE ROUTER

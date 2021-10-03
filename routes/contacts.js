@@ -96,8 +96,24 @@ router.put("/:id", auth, async (request, response) => {
 })
 
 // ROUTE DELETE A CONTACT BASED ON THE id
-router.delete("/:id", auth, (request, response) => {
-    response.json("deleted contact");
+router.delete("/:id", auth, async (request, response) => {
+    try {
+        // GET THE contact FROM THE DATABASE WITH THE PROVIDED id
+        let contact = await Contact.findById(request.params.id);
+        if (!contact) return response.status(404).json({ msg: "contact not found" });
+
+        // CHECK IF THE USER OWNS THE CONTACT THAT THEY WANNA UPDATE
+        if (contact.user.toString() !== request.user.id) return response.status(404).json({ msg: "user not authorised to update" });
+
+        // PROVIDE id OF CONTACT TO UPDATE
+        await Contact.findByIdAndRemove(request.params.id);
+
+        response.json({ msg: "contact deleted" });
+    } catch (error) {
+        
+        console.error(error.message);
+        response.status(500).send("Server error")
+    }
 })
 
 

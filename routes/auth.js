@@ -2,10 +2,12 @@
 const config =  require("config");
 const bcrypt =  require("bcryptjs");
 const jwt =  require("jsonwebtoken");
-const User = require("../models/User");
-const auth =  require("../middleware/auth");
 const { Router, request } = require("express");
 const { check, validationResult } = require('express-validator');
+
+// CUSTOM MODULES
+const User = require("../models/User");
+const auth =  require("../middleware/auth");
 
 
 const router = Router();
@@ -17,7 +19,7 @@ router.get("/", auth, async (request, response) => {
         // request.user WAS SET IN THE auth MIDDLEWARE...THAT IS WHY WE HAVE ACCESS TO IT HERE
         let user =  await User.findById(request.user.id).select("-password");
         response.json( user );
-        
+
     } catch (error) {
         console.error(error.message);
         response.status(500).send("Server error")
